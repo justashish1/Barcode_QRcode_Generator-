@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR & Barcode Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        #main-container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            max-width: 1200px;
+            height: 96vh;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ccc;
+            background-color: #f7f7f7;
+            min-width: 1100px;
+        }
+
+        #qrsidebar {
+            width: 35%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #f2f4ee;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        #content {
+            width: 75%;
+            padding: 20px;
+            position: relative;
+            box-sizing: border-box;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Align content at the top */
+            align-items: center; /* Centering X-axis */
+            background-color: #f7f7f7;
+            overflow-y: auto;
+            margin-top: 0; /* Remove margin-top */
+        }
+
+        h1 {
+            text-transform: uppercase;
+            margin: 0 0 2px 0;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        input, button, select {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            background-color: #fafafa;
+            transition: all 0.3s ease-in-out;
+        }
+
+        input:focus, select:focus {
+            border-color: #32C800; /* Use your company color for focus */
+            box-shadow: 0 0 5px rgba(50, 200, 0, 0.5); /* Light green glow */
+            outline: none;
+        }
+
+        button {
+            background-color: #32C800; /* Company color */
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background-color: #28a745; /* Slightly darker green for hover */
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: 0px 0px 5px rgba(50, 200, 0, 0.5);
+        }
+
+        #logo {
+            width: 300px;
+            height: auto;
+            margin-top: 10px;
+            margin-bottom: 50px;
+            margin-left: 25px;
+        }
+
+        #color-picker {
+            margin-bottom: -10px;
+            padding: 10px;
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        #color-picker:focus {
+            border-color: #32C800;
+            box-shadow: 0 0 5px rgba(50, 200, 0, 0.5);
+        }
+
+        /* Wrapper for color picker to give some context */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .color-picker-label {
+            flex: 1;
+            font-size: 16px;
+            margin-right: 0px;
+            white-space: nowrap;
+            margin-top: 15px;
+            margin-left: 0;
+        }
+
+        #color-picker {
+            flex: 0 0 70%;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #color-picker:hover, #color-picker:focus {
+            border-color: #32C800;
+            box-shadow: 0 0 5px rgba(50, 200, 0, 0.5);
+            outline: none;
+        }
+
+        #qrsidebar select, #qrsidebar input, #qrsidebar button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .code-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .qr-text {
+            padding-left: 20px;
+            font-size: 16px;
+            word-break: break-all;
+        }
+
+        #qr-code, #barcode {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #developer {
+            position: absolute;
+            bottom: 0px;
+            right: 0%;
+            transform: translateX(-50%);
+            color: #888;
+        }
+
+        #message {
+            color: green;
+            display: none;
+            margin-top: 20px;
+        }
+
+        /* New Loading Spinner Styles */
+        .loading {
+            border: 1px solid #f3f3f3; /* Light grey */
+            border-top: 1px solid #32C800; /* Company color */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+            display: none;
+            margin-bottom: 0px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #status-message {
+            font-size: 15px;
+            margin-bottom: 0px;
+            margin-top: 10px;
+            color: #ee0606;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-container">
+        <div id="qrsidebar">
+            <img id="logo" src="https://raw.githubusercontent.com/justashish1/logo/main/logo.png " alt="Logo">
+            <h1>Generator Here</h1>
+            <select id="mode-select" onchange="toggleMode()">
+                <option value="text" selected>Generate Single Code by Text</option>
+                <option value="file">Generate Bulk Codes from File</option>
+            </select>
+            <div id="text-mode">
+                <input type="text" id="qr-data" placeholder="Enter text or URL or number">
+            </div>
+            <div id="file-mode" style="display: none;">
+                <input type="file" id="file-input" accept=".xlsx, .csv" onchange="loadFile()">
+                <!-- Column selection dropdown -->
+                <div id="column-select-section" style="display: none; margin-top: 10px;">
+                    <label for="column-select">Select the column for code generation:</label>
+                    <select id="column-select"></select>
+                </div>
+            </div>
+
+            <!-- Add RAL/RGB and Picker inputs -->
+            <input type="text" id="ral-rgb-input" placeholder="Enter RAL or RGB code">
+            <div class="color-picker-wrapper">
+                <label class="color-picker-label" for="color-picker">Select Color:</label>
+                <input type="color" id="color-picker" value="#32C800">
+            </div>
+            
+            <select id="code-type">
+                <option value="qrcode" selected>Generate QR Code</option>
+                <option value="barcode">Generate Barcode</option>
+                <option value="both">Generate QR & Barcode</option>
+            </select>
+            <button id="submit-btn" onclick="handleGenerate()">Generate</button>
+
+            <!-- Loading spinner and status message -->
+            <div id="loading-spinner" class="loading"></div>
+            <div id="status-message"></div>
+        </div>
+
+        <div id="content">
+            <div id="qr-code"></div>
+            <svg id="barcode"></svg>
+            <p id="message"></p>
+            <p id="developer">www.starengts.com, Email us: info@starengts.com</p>
+        </div>
+    </div>
+
+    <!-- Dynamic loading of qrcode.js and JsBarcode with fallbacks -->
+    <script>
+        // Load QRCode library with multiple CDN fallbacks
+        (function() {
+            var script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js";
+            script.onerror = function() {
+                var fallbackScript1 = document.createElement('script');
+                fallbackScript1.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+                fallbackScript1.onerror = function() {
+                    var fallbackScript2 = document.createElement('script');
+                    fallbackScript2.src = "https://unpkg.com/qrcodejs/qrcode.min.js";
+                    fallbackScript2.onerror = function() {
+                        var localScript = document.createElement('script');
+                        localScript.src = "qrcode.min.js"; // Local fallback
+                        document.head.appendChild(localScript);
+                    };
+                    document.head.appendChild(fallbackScript2);
+                };
+                document.head.appendChild(fallbackScript1);
+            };
+            document.head.appendChild(script);
+        })();
+
+        // Load JsBarcode library with multiple CDN fallbacks
+        (function() {
+            var script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js";
+            script.onerror = function() {
+                var fallbackScript1 = document.createElement('script');
+                fallbackScript1.src = "https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.0/JsBarcode.all.min.js";
+                fallbackScript1.onerror = function() {
+                    var fallbackScript2 = document.createElement('script');
+                    fallbackScript2.src = "https://unpkg.com/jsbarcode@3.11.0/dist/JsBarcode.all.min.js";
+                    fallbackScript2.onerror = function() {
+                        var localScript = document.createElement('script');
+                        localScript.src = "JsBarcode.all.min.js"; // Local fallback
+                        document.head.appendChild(localScript);
+                    };
+                    document.head.appendChild(fallbackScript2);
+                };
+                document.head.appendChild(script);
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        let qrCode = new QRCode(document.getElementById("qr-code"), {
+            width: 250,
+            height: 250,
+        });
+
+        function revertButton() {
+            let submitButton = document.getElementById("submit-btn");
+            submitButton.innerText = "Generate";
+            submitButton.onclick = handleGenerate;
+        }
+
+        // Show loading spinner and status message
+        function showLoading(message) {
+            document.getElementById("loading-spinner").style.display = "block";
+            document.getElementById("status-message").style.display = "block";
+            document.getElementById("status-message").innerText = message;
+        }
+
+        // Hide loading spinner and update status message
+        function hideLoading(successMessage) {
+            document.getElementById("loading-spinner").style.display = "none";
+            document.getElementById("status-message").innerText = successMessage;
+        }
+
+        // Color input synchronization with RAL/RGB and picker
+        document.getElementById("ral-rgb-input").addEventListener("input", updateColorFromRALRGB);
+        document.getElementById("color-picker").addEventListener("input", updateRALRGBFromPicker);
+        
+        function updateColorFromRALRGB() {
+            const input = document.getElementById('ral-rgb-input').value.trim();
+            if (/^#[0-9A-F]{6}$/i.test(input)) {
+                document.getElementById('color-picker').value = input;
+            } else if (/^RGB\(\d{1,3},\d{1,3},\d{1,3}\)$/i.test(input)) {
+                const rgb = input.match(/\d+/g).map(Number);
+                if (rgb.every(value => value >= 0 && value <= 255)) {
+                    const hex = `#${((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1).toUpperCase()}`;
+                    document.getElementById('color-picker').value = hex;
+                }
+            }
+        }
+
+        function updateRALRGBFromPicker() {
+            const colorPicker = document.getElementById('color-picker');
+            document.getElementById('ral-rgb-input').value = colorPicker.value;
+        }
+
+        // Reset status message
+        function resetStatus() {
+            document.getElementById("status-message").style.display = "none";
+        }
+
+        document.getElementById("qr-data").addEventListener("input", () => { resetStatus(); revertButton(); });
+        document.getElementById("ral-rgb-input").addEventListener("input", () => { resetStatus(); revertButton(); });
+        document.getElementById("color-picker").addEventListener("input", () => { resetStatus(); revertButton(); });
+        document.getElementById("code-type").addEventListener("change", () => { resetStatus(); revertButton(); });
+        document.getElementById("file-input").addEventListener("change", () => { resetStatus(); revertButton(); });
+        document.getElementById("column-select").addEventListener("change", () => { resetStatus(); revertButton(); });
+
+        function toggleMode() {
+            let mode = document.getElementById("mode-select").value;
+            let textMode = document.getElementById("text-mode");
+            let fileMode = document.getElementById("file-mode");
+
+            if (mode === "text") {
+                textMode.style.display = "block";
+                fileMode.style.display = "none";
+                document.getElementById("qr-data").value = ""; 
+            } else if (mode === "file") {
+                textMode.style.display = "none";
+                fileMode.style.display = "block";
+                document.getElementById("file-input").value = ""; 
+            }
+            clearContent(); 
+            revertButton(); 
+        }
+
+        // Clear the content of the page
+        function clearContent() {
+            let container = document.getElementById("content");
+            container.innerHTML = `
+                <div id="qr-code"></div>
+                <svg id="barcode"></svg>
+                <p id="message"></p>
+                <p id="developer">For Production version, Email us: info@starengts.com</p>
+            `;
+            qrCode = new QRCode(document.getElementById("qr-code"), {
+                width: 250,
+                height: 250,
+            });
+        }
+
+        // Handle Generate button click
+        function handleGenerate() {
+            let mode = document.getElementById("mode-select").value;
+
+            if (mode === "file") {
+                showLoading("Processing file...");
+                generateBulkCodes();
+            } else if (mode === "text") {
+                generateCodes();
+
+                let submitButton = document.getElementById("submit-btn");
+                submitButton.innerText = "Download as PNG";
+                submitButton.onclick = downloadSingleAsPNG;
+                hideLoading("Code generated successfully!");
+            }
+        }
+
+        // Generate a single QR/Barcode code based on user input
+        function generateCodes() {
+            let qrData = document.getElementById("qr-data").value.trim();
+            let qrColor = document.getElementById("color-picker").value;
+            let codeType = document.getElementById("code-type").value;
+
+            if (qrData === "") {
+                alert("Please enter text or URL to generate the code.");
+                return;
+            }
+
+            qrCode.clear();
+            document.getElementById("barcode").innerHTML = "";
+
+            if (codeType === "qrcode" || codeType === "both") {
+                qrCode._htOption.colorDark = qrColor;
+                qrCode.makeCode(qrData);
+                document.getElementById("qr-code").style.display = "block";
+            } else {
+                document.getElementById("qr-code").style.display = "none"; 
+            }
+
+            if (codeType === "barcode" || codeType === "both") {
+                setTimeout(() => {
+                    try {
+                        let barcodeElement = document.getElementById("barcode");
+                        if (barcodeElement && barcodeElement instanceof SVGElement) {
+                            JsBarcode(barcodeElement, qrData, {
+                                format: "CODE128",
+                                lineColor: qrColor,
+                                width: 2,
+                                height: 100,
+                                displayValue: true
+                            });
+                            document.getElementById("barcode").style.display = "block";
+                        } else {
+                            console.error("Invalid SVG element for barcode generation.");
+                        }
+                    } catch (error) {
+                        console.error("Error generating barcode:", error);
+                    }
+                }, 500);
+            } else {
+                document.getElementById("barcode").style.display = "none";
+            }
+        }
+
+        // Function to download single QR code or barcode as PNG
+        function downloadSingleAsPNG() {
+            let contentDiv = document.getElementById("content");
+
+            let barcodeElement = document.getElementById("barcode");
+            barcodeElement.setAttribute("height", "170");
+
+            let canvasHeight = contentDiv.offsetHeight + 50;
+
+            // Use html2canvas to capture the content as an image
+            html2canvas(contentDiv, {
+                scale: 3,
+                width: contentDiv.offsetWidth,
+                height: canvasHeight
+            }).then(canvas => {
+                let imageData = canvas.toDataURL("image/png");
+
+                // Create a download link for the PNG
+                let downloadLink = document.createElement("a");
+                downloadLink.href = imageData;
+                downloadLink.download = "QRCode_or_Barcode.png";
+
+                // Programmatically click the download link to trigger the download
+                downloadLink.click();
+            });
+        }
+
+        // Handle file load and prepare column selection for bulk codes
+        function loadFile() {
+            let fileInput = document.getElementById("file-input");
+            let reader = new FileReader();
+
+            reader.onload = function(e) {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, { type: 'array' });
+                let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                let rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                if (rows.length > 0) {
+                    let headers = rows[0];
+                    let columnSelect = document.getElementById("column-select");
+
+                    // Clear existing options
+                    columnSelect.innerHTML = '';
+
+                    // Populate the dropdown with column headers
+                    headers.forEach((header, index) => {
+                        let option = document.createElement("option");
+                        option.value = index;
+                        option.text = header;
+                        columnSelect.appendChild(option);
+                    });
+
+                    document.getElementById("column-select-section").style.display = "block";
+                }
+            };
+            reader.readAsArrayBuffer(fileInput.files[0]);
+        }
+
+        // Generate bulk codes from the selected column
+        function generateBulkCodes() {
+            let fileInput = document.getElementById("file-input");
+            let qrColor = document.getElementById("color-picker").value;
+            let codeType = document.getElementById("code-type").value;
+            let selectedColumnIndex = document.getElementById("column-select").value;
+
+            if (fileInput.files.length === 0) {
+                alert("Please upload an Excel or CSV file.");
+                return;
+            }
+
+            if (!selectedColumnIndex) {
+                alert("Please select a column for code generation.");
+                return;
+            }
+
+            let file = fileInput.files[0];
+            let reader = new FileReader();
+
+            reader.onload = function(e) {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, { type: 'array' });
+                let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                let rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                let container = document.getElementById("content");
+                container.innerHTML = "";
+
+                rows.forEach((row, index) => {
+                    if (index === 0) return;
+
+                    let qrData = row[selectedColumnIndex] ? String(row[selectedColumnIndex]).trim() : '';
+                    if (qrData !== "") {
+                        let codePair = document.createElement("div");
+                        codePair.className = "code-pair";
+
+                        let qrDiv = document.createElement("div");
+                        qrDiv.id = "qr-code-" + index;
+
+                        let textDiv = document.createElement("div");
+                        textDiv.className = "qr-text";
+                        textDiv.textContent = qrData;
+
+                        textDiv.style.color = qrColor;
+
+                        codePair.appendChild(qrDiv);
+                        codePair.appendChild(textDiv);
+
+                        container.appendChild(codePair);
+
+                        if (codeType === "qrcode" || codeType === "both") {
+                            let qrCode = new QRCode(qrDiv, {
+                                width: 150,
+                                height: 150,
+                                colorDark: qrColor,
+                            });
+                            qrCode.makeCode(qrData);
+                        }
+
+                        if (codeType === "barcode" || codeType === "both") {
+                            let barcodeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                            barcodeSvg.id = "barcode-" + index;
+                            codePair.appendChild(barcodeSvg);
+
+                            setTimeout(() => {
+                                try {
+                                    let barcodeElement = document.getElementById(`barcode-${index}`);
+                                    if (barcodeElement && barcodeElement instanceof SVGElement) {
+                                        JsBarcode(barcodeElement, qrData, {
+                                            format: "CODE128",
+                                            lineColor: qrColor,
+                                            width: 2,
+                                            height: 50,
+                                            displayValue: true
+                                        });
+                                    } else {
+                                        console.error("Invalid SVG element for barcode generation.");
+                                    }
+                                } catch (error) {
+                                    console.error("Error generating barcode:", error);
+                                }
+                            }, 500);
+                        }
+                    }
+                });
+
+                hideLoading("Codes generated successfully!");
+
+                let submitButton = document.getElementById("submit-btn");
+                submitButton.innerText = "Download PDF";
+                submitButton.onclick = downloadAllAsPDF;
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Bulk code PDF download functionality
+        function downloadAllAsPDF() {
+            const { jsPDF } = window.jspdf;
+            let pdf = new jsPDF('p', 'mm', 'a4');
+
+            let pageWidth = pdf.internal.pageSize.getWidth();
+            let pageHeight = pdf.internal.pageSize.getHeight();
+            let margin = 10;
+            let position = margin;
+
+            let gapBetweenCodes = 10;
+
+            let qrCodeWidth = 30;
+            let qrCodeHeight = 30;
+            let barcodeWidth = 80;
+            let barcodeHeight = 30;
+            let textOffsetX = qrCodeWidth + 10;
+
+            let ralColor = document.getElementById("ral-rgb-input").value.trim();
+            let qrBarcodeColor = /^#[0-9A-F]{6}$/i.test(ralColor) ? ralColor : document.getElementById("color-picker").value;
+
+            let container = document.getElementById("content");
+            let codePairs = Array.from(container.getElementsByClassName("code-pair"));
+
+            let processNextCodePair = (index) => {
+                if (index >= codePairs.length) {
+                    pdf.save('Generated_Codes.pdf');
+                    return;
+                }
+
+                let codePair = codePairs[index];
+                let qrCanvas = codePair.querySelector('canvas');
+                let barcodeSvg = codePair.querySelector('svg');
+                let text = codePair.querySelector('.qr-text') ? codePair.querySelector('.qr-text').textContent : '';
+
+                if (position + qrCodeHeight + gapBetweenCodes > pageHeight - margin) {
+                    pdf.addPage();
+                    position = margin;
+                }
+
+                if (qrCanvas) {
+                    let qrImage = qrCanvas.toDataURL('image/png');
+
+                    pdf.addImage(qrImage, 'PNG', margin, position, qrCodeWidth, qrCodeHeight);
+
+                    if (!barcodeSvg && text) {
+                        pdf.setTextColor(qrBarcodeColor);
+                        pdf.text(margin + textOffsetX, position + qrCodeHeight / 2, text);
+                    }
+                }
+
+                if (barcodeSvg) {
+                    let barcodePositionX = margin + qrCodeWidth + 10;
+                    let barcodePositionY = position;
+
+                    let barcodeCanvas = document.createElement("canvas");
+                    barcodeCanvas.width = barcodeWidth;
+                    barcodeCanvas.height = barcodeHeight;
+
+                    JsBarcode(barcodeCanvas, text, {
+                        format: "CODE128",
+                        lineColor: qrBarcodeColor,
+                        width: 2,
+                        height: barcodeHeight,
+                        displayValue: true
+                    });
+
+                    let barcodeImage = barcodeCanvas.toDataURL('image/png');
+                    pdf.addImage(barcodeImage, 'PNG', barcodePositionX, barcodePositionY, barcodeWidth, barcodeHeight);
+                }
+
+                position += Math.max(qrCodeHeight, barcodeHeight) + gapBetweenCodes;
+
+                processNextCodePair(index + 1);
+            };
+
+            processNextCodePair(0);
+        }
+    </script>
+</body>
+</html>
